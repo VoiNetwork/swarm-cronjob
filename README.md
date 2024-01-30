@@ -12,6 +12,11 @@
   <a href="https://www.paypal.me/crazyws"><img src="https://img.shields.io/badge/donate-paypal-00457c.svg?logo=paypal&style=flat-square" alt="Donate Paypal"></a>
 </p>
 
+> **THIS PROJECT SHOULD NOT BE RELIED UPON**
+> 
+> This project is a short team fix until https://github.com/crazy-max/swarm-cronjob/issues/307 has been remediated
+>
+
 ## About
 
 **swarm-cronjob** creates jobs on a time-based schedule on [Swarm](https://docs.docker.com/engine/swarm/) with a
