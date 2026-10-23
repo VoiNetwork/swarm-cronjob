@@ -3,7 +3,7 @@ package model
 import (
 	"time"
 
-	"github.com/docker/docker/api/types/swarm"
+	"github.com/moby/moby/api/types/swarm"
 )
 
 // ServiceEvent represents attributes of a service event
@@ -30,6 +30,7 @@ type ServiceInfo struct {
 	Mode         ServiceMode
 	Labels       map[string]string
 	Actives      uint64
+	Busy         uint64
 	Replicas     uint64
 	Rollback     bool
 	UpdatedAt    time.Time

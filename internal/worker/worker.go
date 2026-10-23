@@ -5,8 +5,8 @@ import (
 
 	"github.com/crazy-max/swarm-cronjob/internal/docker"
 	"github.com/crazy-max/swarm-cronjob/internal/model"
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/swarm"
+	"github.com/moby/moby/api/types/swarm"
+	"github.com/moby/moby/client"
 	"github.com/rs/zerolog/log"
 )
 
@@ -46,9 +46,18 @@ func (c *Client) Run() {
 			Msg("Skip running job")
 		return
 	}
+	if c.Job.SkipRunning && service.Busy > 0 {
+		log.Warn().Str("service", c.Job.Name).
+			Uint64("tasks_active", service.Actives).
+			Uint64("tasks_busy", service.Busy).
+			Str("status", service.UpdateStatus).
+			Msg("Skip busy job")
+		return
+	}
 
 	log.Info().Str("service", c.Job.Name).
 		Uint64("tasks_active", service.Actives).
+		Uint64("tasks_busy", service.Busy).
 		Str("status", service.UpdateStatus).Msg("Start job")
 
 	// Set number of replicas in replicated mode
@@ -67,7 +76,7 @@ func (c *Client) Run() {
 	serviceUp.Spec.TaskTemplate.ForceUpdate = serviceUp.Version.Index
 
 	// Update options
-	updateOpts := types.ServiceUpdateOptions{}
+	updateOpts := client.ServiceUpdateOptions{}
 	if c.Job.RegistryAuth {
 		encodedAuth, err := c.Docker.RetrieveAuthTokenFromImage(context.Background(), serviceUp.Spec.TaskTemplate.ContainerSpec.Image)
 		if err != nil {
@@ -78,7 +87,7 @@ func (c *Client) Run() {
 			updateOpts.EncodedRegistryAuth = encodedAuth
 		}
 	} else {
-		updateOpts.RegistryAuthFrom = types.RegistryAuthFromSpec
+		updateOpts.RegistryAuthFrom = swarm.RegistryAuthFromSpec
 	}
 	if c.Job.QueryRegistry != nil {
 		updateOpts.QueryRegistry = *c.Job.QueryRegistry
@@ -99,7 +108,7 @@ func (c *Client) scaleDown(serviceRaw swarm.Service) (swarm.Service, error) {
 	serviceRaw.Spec.Labels["swarm.cronjob.scaledown"] = "true"
 	serviceRaw.Spec.TaskTemplate.ForceUpdate = serviceRaw.Version.Index
 
-	_, err := c.Docker.ServiceUpdate(context.Background(), serviceRaw.ID, serviceRaw.Version, serviceRaw.Spec, types.ServiceUpdateOptions{})
+	_, err := c.Docker.ServiceUpdate(context.Background(), serviceRaw.ID, serviceRaw.Version, serviceRaw.Spec, client.ServiceUpdateOptions{})
 	if err != nil {
 		return swarm.Service{}, err
 	}
