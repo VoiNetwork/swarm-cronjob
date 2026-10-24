@@ -8,24 +8,20 @@
   <a href="https://hub.docker.com/r/crazymax/swarm-cronjob/"><img src="https://img.shields.io/docker/stars/crazymax/swarm-cronjob.svg?style=flat-square&logo=docker" alt="Docker Stars"></a>
   <a href="https://hub.docker.com/r/crazymax/swarm-cronjob/"><img src="https://img.shields.io/docker/pulls/crazymax/swarm-cronjob.svg?style=flat-square&logo=docker" alt="Docker Pulls"></a>
   <br /><a href="https://goreportcard.com/report/github.com/crazy-max/swarm-cronjob"><img src="https://goreportcard.com/badge/github.com/crazy-max/swarm-cronjob?style=flat-square" alt="Go Report"></a>
+  <a href="https://codecov.io/gh/crazy-max/swarm-cronjob"><img src="https://img.shields.io/codecov/c/github/crazy-max/swarm-cronjob?logo=codecov&style=flat-square" alt="Codecov"></a>
   <a href="https://github.com/sponsors/crazy-max"><img src="https://img.shields.io/badge/sponsor-crazy--max-181717.svg?logo=github&style=flat-square" alt="Become a sponsor"></a>
   <a href="https://www.paypal.me/crazyws"><img src="https://img.shields.io/badge/donate-paypal-00457c.svg?logo=paypal&style=flat-square" alt="Donate Paypal"></a>
 </p>
 
-> **THIS PROJECT SHOULD NOT BE RELIED UPON**
-> 
-> This project is a short team fix until https://github.com/crazy-max/swarm-cronjob/issues/307 has been remediated
->
-
 ## About
 
-**swarm-cronjob** creates jobs on a time-based schedule on [Swarm](https://docs.docker.com/engine/swarm/) with a
-dedicated service in a distributed manner that configures itself automatically and dynamically through
-[labels](https://docs.docker.com/engine/reference/commandline/service_create/#set-metadata-on-a-service--l---label)
-and Docker API.
+**swarm-cronjob** lets you run recurring jobs on [Docker Swarm](https://docs.docker.com/engine/swarm/)
+by defining cron-style schedules with [service labels](https://docs.docker.com/engine/reference/commandline/service_create/#set-metadata-on-a-service--l---label).
+It watches your services through the Docker API, keeps its configuration in
+sync automatically, and creates scheduled job runs across the cluster without
+requiring a separate scheduler.
 
-> **Note**
-> 
+> [!TIP] 
 > Want to be notified of new releases? Check out 🔔 [Diun (Docker Image Update Notifier)](https://github.com/crazy-max/diun)
 > project!
 

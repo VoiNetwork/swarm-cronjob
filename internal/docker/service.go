@@ -2,19 +2,18 @@ package docker
 
 import (
 	"context"
-	"fmt"
 	"sort"
 
 	"github.com/crazy-max/swarm-cronjob/internal/model"
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/filters"
-	"github.com/docker/docker/api/types/swarm"
+	"github.com/moby/moby/api/types/swarm"
+	"github.com/moby/moby/client"
+	"github.com/pkg/errors"
 )
 
 // ServiceList return all services.
 func (c *DockerClient) ServiceList(args *model.ServiceListArgs) ([]*model.ServiceInfo, error) {
-	opts := types.ServiceListOptions{
-		Filters: filters.NewArgs(),
+	opts := client.ServiceListOptions{
+		Filters: make(client.Filters),
 	}
 	if args.Name != "" {
 		opts.Filters.Add("name", args.Name)
@@ -25,37 +24,39 @@ func (c *DockerClient) ServiceList(args *model.ServiceListArgs) ([]*model.Servic
 		}
 	}
 
-	services, err := c.api.ServiceList(context.Background(), opts)
+	servicesRes, err := c.api.ServiceList(context.Background(), opts)
 	if err != nil {
 		return nil, err
 	}
+	services := servicesRes.Items
 	sort.Slice(services, func(i, j int) bool {
 		return services[i].Spec.Name < services[j].Spec.Name
 	})
 
 	// nodes
-	nodes, err := c.api.NodeList(context.Background(), types.NodeListOptions{})
+	nodesRes, err := c.api.NodeList(context.Background(), client.NodeListOptions{})
 	if err != nil {
 		return nil, err
 	}
 	activeNodes := make(map[string]struct{})
-	for _, node := range nodes {
+	for _, node := range nodesRes.Items {
 		if node.Status.State != swarm.NodeStateDown {
 			activeNodes[node.ID] = struct{}{}
 		}
 	}
 
 	// tasks
-	taskOpts := types.TaskListOptions{
-		Filters: filters.NewArgs(),
+	taskOpts := client.TaskListOptions{
+		Filters: make(client.Filters),
 	}
 	for _, service := range services {
 		taskOpts.Filters.Add("service", service.ID)
 	}
-	tasks, err := c.api.TaskList(context.Background(), taskOpts)
+	tasksRes, err := c.api.TaskList(context.Background(), taskOpts)
 	if err != nil {
 		return nil, err
 	}
+	tasks := tasksRes.Items
 
 	// active tasks
 	running, tasksNoShutdown := map[string]uint64{}, map[string]uint64{}
@@ -78,6 +79,7 @@ func (c *DockerClient) ServiceList(args *model.ServiceListArgs) ([]*model.Servic
 			Image:     normalizeImage(service.Spec.TaskTemplate.ContainerSpec.Image),
 			Labels:    service.Spec.Labels,
 			Actives:   running[service.ID],
+			Busy:      tasksNoShutdown[service.ID],
 			UpdatedAt: service.UpdatedAt.Local(),
 			Rollback:  service.PreviousSpec != nil,
 		}
@@ -104,7 +106,7 @@ func (c *DockerClient) Service(name string) (*model.ServiceInfo, error) {
 	if err != nil {
 		return nil, err
 	} else if len(service) == 0 {
-		return nil, fmt.Errorf("%s service not found", name)
+		return nil, errors.Errorf("%s service not found", name)
 	}
 
 	return service[0], nil
